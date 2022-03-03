@@ -22,7 +22,7 @@ library(maps)
 # IF YOU HAVE MORE THAN ONE SPECIES ----
 myspecies <-exosp$Species #c("Galemys pyrenaicus", "Chioglossa lusitanica") #
 # download GBIF occurrence data for these species; this may take a long time if there are many data points!
-gbif_data <- occ_data(scientificName = myspecies, hasCoordinate = TRUE, limit=99999) # limit = 99  # decrease the 'limit' if you just want to see how many records there are without waiting all the time that it will take to download the whole dataset
+gbif_data <- occ_data(scientificName = myspecies, hasCoordinate = TRUE, limit=800000) # limit = 99  # decrease the 'limit' if you just want to see how many records there are without waiting all the time that it will take to download the whole dataset
 # take a look at the downloaded data:
 gbif_data
 #saveRDS(gbif_data, file = "./Output/gbifdata.rds") ##ATTENTION MICROPETRUS A REFAIRE TOURNER
@@ -101,6 +101,42 @@ nrow(myspecies_coords)
 # map the cleaned occurrence records with a different colour on top of the raw ones:
 #points(myspecies_coords[ , c("decimalLongitude", "decimalLatitude")], pch = 20, cex = 0.5, col = "turquoise")
 saveRDS(myspecies_coords, file = "./Output/Occurence_aquaculture_clean.rds")
+
+
+
+####JEZEQUEL AMAZON DRAINAGE BASINS
+
+SA<-read.csv2("./Data/South_America/CompleteDatabase2022_v2.csv")
+SA<-SA[, c("Referent.Species.Name", "Original.Species.Name.Source", "Longitude.X", "Latitude.Y")]
+SA<-na.omit(SA)
+
+##Only keep species of aquaculture (51 sp)
+
+class(SA$Referent.Species.Name)
+SA$sp<-gsub("\\."," ", SA$Referent.Species.Name)
+SA
+SA2<-SA %>% filter(SA$sp %in% exosp$Species)
+
+#how many species?
+unique(SA2$sp) #seulement 7 esp√®ces???
+
+
+
+
+###check for synonyms####!!!!!!!!!!!!!!!!!!!!!!!!!######
+
+
+#####plot data
+SA2$sp<-as.factor(SA2$sp)
+map("world", xlim = range(SA2$Longitude.X) , ylim = range(SA2$Latitude.Y))  # if the map doesn't appear right at first, run this command again
+points(SA2[ , c("Longitude.X", "Latitude.Y")], col = SA2$sp, pch = 20)
+# you may notice (especially if you zoom in, e.g. by specifying a smaller range of coordinates under 'xlim' and 'ylim' above) that many points are too regularly spaced to be exact locations of species sightings; rather, such points are likely to be centroids of (relatively large) grid cells on which particular surveys were based, so remember to adjust the spatial resolution of your analysis accordingly!
+
+
+
+
+
+
 
 
 
@@ -272,7 +308,7 @@ plot(worldrivers) #The dataset presents 687 rivers associated to 405 Major River
 worldlakes<-readOGR("./Shapefiles/world_rivers/world_rivers.shp")
 
 basins<-readOGR("./Shapefiles/basins with regions/basins_with_regions.shp.shp")
-plot(basins) #basins boris? revÈrifier
+plot(basins) #basins boris? rev?rifier
 
 basins<-readOGR("./Shapefiles/Leprieur_Tedesco/Basin042017_3119.shp")
 plot(basins) #basins tedesco

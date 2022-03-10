@@ -21,10 +21,15 @@ library(maps)
 #https://www.r-bloggers.com/2021/03/downloading-and-cleaning-gbif-data-with-r/
 # IF YOU HAVE MORE THAN ONE SPECIES ----
 myspecies <-exosp$Species #c("Galemys pyrenaicus", "Chioglossa lusitanica") #
-# download GBIF occurrence data for these species; this may take a long time if there are many data points!
-gbif_data <- occ_data(scientificName = myspecies, hasCoordinate = TRUE, limit=800000) # limit = 99  # decrease the 'limit' if you just want to see how many records there are without waiting all the time that it will take to download the whole dataset
-# take a look at the downloaded data:
-gbif_data
+
+
+###GBIF########
+
+# # download GBIF occurrence data for these species; this may take a long time if there are many data points!
+# gbif_data <- occ_data(scientificName = myspecies, hasCoordinate = TRUE, limit=800000) # limit = 99  # decrease the 'limit' if you just want to see how many records there are without waiting all the time that it will take to download the whole dataset
+# # take a look at the downloaded data:
+# gbif_data
+
 #saveRDS(gbif_data, file = "./Output/gbifdata.rds") ##ATTENTION MICROPETRUS A REFAIRE TOURNER
 
 gbif_data<-readRDS("./Output/gbifdata.rds")
@@ -47,9 +52,9 @@ gbif_data<-readRDS("./Output/gbifdata.rds")
 
 # check how the data are organized:
 names(gbif_data)
-names(gbif_data[[myspecies[1]]])
-names(gbif_data[[myspecies[1]]]$meta)
-names(gbif_data[[myspecies[1]]]$data)
+# names(gbif_data[[myspecies[1]]])
+# names(gbif_data[[myspecies[1]]]$meta)
+# names(gbif_data[[myspecies[1]]]$data)
 
 # create and fill a list with only the 'data' section for each species:
 myspecies_coords_list <- vector("list", length(myspecies))
@@ -73,38 +78,60 @@ map("world", xlim = range(myspecies_coords$decimalLongitude), ylim = range(myspe
 points(myspecies_coords[ , c("decimalLongitude", "decimalLatitude")], col = myspecies_coords$species, pch = 20)
 # you may notice (especially if you zoom in, e.g. by specifying a smaller range of coordinates under 'xlim' and 'ylim' above) that many points are too regularly spaced to be exact locations of species sightings; rather, such points are likely to be centroids of (relatively large) grid cells on which particular surveys were based, so remember to adjust the spatial resolution of your analysis accordingly!
 
+
+##transform in spatial point dataframe
+
+
+coordinates(myspecies_coords)=~decimalLongitude+decimalLatitude
+proj4string(myspecies_coords)<- CRS("+proj=longlat +datum=WGS84")
+coordinates(myspecies_coords) <- 2:3
+class(myspecies_coords)
+
+x11()
+map('world')
+points(myspecies_coords,col = myspecies_coords$species )
+
+
+###♥save spatial point dataframe
 saveRDS(myspecies_coords, file = "./Output/Occurence_aquaculture_not_clean.rds")
 
-# CLEAN THE DATASET! ----
-# mind that data often contain errors, so careful inspection and cleaning are necessary! 
-# here we'll first remove records of absence or zero-abundance (if any):
-names(myspecies_coords)
-sort(unique(myspecies_coords$individualCount))  # notice if some points correspond to zero abundance
-sort(unique(myspecies_coords$occurrenceStatus))  # check for different indications of "absent", which could be in different languages! and remember that R is case-sensitive
-absence_rows <- which(myspecies_coords$individualCount == 0 | myspecies_coords$occurrenceStatus %in% c("absent", "Absent", "ABSENT", "ausente", "Ausente", "AUSENTE"))
-length(absence_rows)
-if (length(absence_rows) > 0) {
-  myspecies_coords <- myspecies_coords[-absence_rows, ]
-}
-# let's do some further data cleaning with functions of the 'scrubr' package (but note this cleaning is not exhaustive!)
-nrow(myspecies_coords)
-myspecies_coords <- coord_incomplete(coord_imprecise(coord_impossible(coord_unlikely(myspecies_coords))))
-nrow(myspecies_coords)
-# map the cleaned occurrence data:
-map("world", xlim = range(myspecies_coords$decimalLongitude), ylim = range(myspecies_coords$decimalLatitude))  # if the map doesn't appear right at first, run this command again
-points(myspecies_coords[ , c("decimalLongitude", "decimalLatitude")], col = myspecies_coords$species, pch = ".")
-# possible erroneous points e.g. on the Equator (lat and lon = 0) should have disappeared now
-# also eliminate presences with reported coordinate uncertainty (location error, spatial resolution) larger than 5 km (5000 m):
-myspecies_coords <- coord_uncertain(myspecies_coords, coorduncertainityLimit = 5000)
-nrow(myspecies_coords)
-# but note that this will only get rid of records where coordinate uncertainty is adequately reported, which may not always be the case! Careful mapping and visual inspection is necessary
-# map the cleaned occurrence records with a different colour on top of the raw ones:
-#points(myspecies_coords[ , c("decimalLongitude", "decimalLatitude")], pch = 20, cex = 0.5, col = "turquoise")
-saveRDS(myspecies_coords, file = "./Output/Occurence_aquaculture_clean.rds")
 
 
 
-####JEZEQUEL AMAZON DRAINAGE BASINS
+
+
+
+
+# # clean the dataset!!!!!!!!!!!!!!!!!!! ----########################
+# # mind that data often contain errors, so careful inspection and cleaning are necessary! 
+# # here we'll first remove records of absence or zero-abundance (if any):
+# names(myspecies_coords)
+# sort(unique(myspecies_coords$individualCount))  # notice if some points correspond to zero abundance
+# sort(unique(myspecies_coords$occurrenceStatus))  # check for different indications of "absent", which could be in different languages! and remember that R is case-sensitive
+# absence_rows <- which(myspecies_coords$individualCount == 0 | myspecies_coords$occurrenceStatus %in% c("absent", "Absent", "ABSENT", "ausente", "Ausente", "AUSENTE"))
+# length(absence_rows)
+# if (length(absence_rows) > 0) {
+#   myspecies_coords <- myspecies_coords[-absence_rows, ]
+# }
+# # let's do some further data cleaning with functions of the 'scrubr' package (but note this cleaning is not exhaustive!)
+# nrow(myspecies_coords)
+# myspecies_coords <- coord_incomplete(coord_imprecise(coord_impossible(coord_unlikely(myspecies_coords))))
+# nrow(myspecies_coords)
+# # map the cleaned occurrence data:
+# map("world", xlim = range(myspecies_coords$decimalLongitude), ylim = range(myspecies_coords$decimalLatitude))  # if the map doesn't appear right at first, run this command again
+# points(myspecies_coords[ , c("decimalLongitude", "decimalLatitude")], col = myspecies_coords$species, pch = ".")
+# # possible erroneous points e.g. on the Equator (lat and lon = 0) should have disappeared now
+# # also eliminate presences with reported coordinate uncertainty (location error, spatial resolution) larger than 5 km (5000 m):
+# myspecies_coords <- coord_uncertain(myspecies_coords, coorduncertainityLimit = 5000)
+# nrow(myspecies_coords)
+# # but note that this will only get rid of records where coordinate uncertainty is adequately reported, which may not always be the case! Careful mapping and visual inspection is necessary
+# # map the cleaned occurrence records with a different colour on top of the raw ones:
+# #points(myspecies_coords[ , c("decimalLongitude", "decimalLatitude")], pch = 20, cex = 0.5, col = "turquoise")
+# saveRDS(myspecies_coords, file = "./Output/Occurence_aquaculture_clean.rds")
+
+
+
+####JEZEQUEL AMAZON DRAINAGE BASINS##################
 
 SA<-read.csv2("./Data/South_America/CompleteDatabase2022_v2.csv")
 SA<-SA[, c("Referent.Species.Name", "Original.Species.Name.Source", "Longitude.X", "Latitude.Y")]
@@ -119,8 +146,23 @@ SA2<-SA %>% filter(SA$sp %in% exosp$Species)
 
 #how many species?
 unique(SA2$sp) #seulement 7 espèces???
+saveRDS(SA2, file = "./Output/SOUTH_AMERICA.rds")
+SA2$sp<-as.factor(SA2$sp)
+
+##transform coordinates in spatial object - spatial point dataframe
+
+coordinates(SA2)=~Longitude.X+Latitude.Y
+proj4string(SA2)<- CRS("+proj=longlat +datum=WGS84")
+class(SA2)
+
+##plot spatial point dataframe
+x11()
+map('world')
+points(SA2,col = SA2$sp )
 
 
+###BIND TWO SPATIAL POINT DATAFRAME
+spatial<-merge(myspecies_coords, SA2, by.x=species, by.y=sp)
 
 
 ###check for synonyms####!!!!!!!!!!!!!!!!!!!!!!!!!######
@@ -130,7 +172,44 @@ unique(SA2$sp) #seulement 7 espèces???
 SA2$sp<-as.factor(SA2$sp)
 map("world", xlim = range(SA2$Longitude.X) , ylim = range(SA2$Latitude.Y))  # if the map doesn't appear right at first, run this command again
 points(SA2[ , c("Longitude.X", "Latitude.Y")], col = SA2$sp, pch = 20)
-# you may notice (especially if you zoom in, e.g. by specifying a smaller range of coordinates under 'xlim' and 'ylim' above) that many points are too regularly spaced to be exact locations of species sightings; rather, such points are likely to be centroids of (relatively large) grid cells on which particular surveys were based, so remember to adjust the spatial resolution of your analysis accordingly!
+
+##rename column to merge with other daat
+SA3<-SA2[, c("sp", "Longitude.X", "Latitude.Y")]
+names(SA3)<-c("species", "decimalLongitude", "decimalLatitude")
+
+
+###ADD DATA TO THE ALL DATABASE
+head(myspecies_coords)
+myspecies_coords<-rbind(myspecies_coords, SA3)
+
+
+##FISHBASE OCCURENCE#####
+library (rfishbase)
+# version()
+# get_releases()
+# rfishbase::available_releases()
+#options(FISHBASE_VERSION="21.12")
+foo = readOGR("./Data/FishBase/Cyprinus_carpio.kml")
+x11()
+plot(foo)
+occurrence()
+
+
+####IUCN-points######
+setwd("D:/these/Axe_3")
+iucn<-read.csv2("./Data/FW_FISH_points/FW_FISH_points.csv", sep=",")
+# iucnpoly<-readOGR("./Data/FW_FISH/FW_FISH_PART1.shp")
+# plot(iucnpoly)
+iucn<-iucn[, c("binomial", "longitude", "latitude", "legend")]
+iucn2<-iucn %>% filter(iucn$binomial %in% exosp$Species)
+table(iucn2$binomial)
+table(iucn2$legend)
+
+iucn2$binomial<-as.factor(iucn2$binomial)
+x11()
+map("world")  # if the map doesn't appear right at first, run this command again
+points(x=iucn2$latitude, y=iucn2$longitude, col = iucn2$binomial, pch = 20)
+
 
 
 
@@ -143,7 +222,7 @@ points(SA2[ , c("Longitude.X", "Latitude.Y")], col = SA2$sp, pch = 20)
 #######LANCER ICIIII#######
 
 gbif_data<-readRDS("./Output/gbifdata.rds")
-myspecies_coords<-readRDS("./Output/Occurence_aquaculture_not_clean.rds")
+#myspecies_coords<-readRDS("./Output/Occurence_aquaculture_not_clean.rds")
 ######ADEQUATION WITH TEDESCO DATABASE
 
 bassinTedesco<-read.csv2("./Data/Leprieur_Tedesco/Occurrence_Table.csv")
@@ -205,8 +284,8 @@ for (i in 1:length(sp)){#length(sp)
 }
 
 Nbpts_in_shp
-saveRDS(Nbpts_in_shp, file = "./Output/Nbpts_in_shp.rds")
-saveRDS(spatialpoints, file = "./Output/spatialpoints.rds")
+# saveRDS(Nbpts_in_shp, file = "./Output/Nbpts_in_shp.rds")
+# saveRDS(spatialpoints, file = "./Output/spatialpoints.rds")
 
 Nbpts_in_shp<-readRDS("./Output/Nbpts_in_shp.rds")
 spatialpoints<-readRDS("./Output/Nbpts_in_shp.rds")

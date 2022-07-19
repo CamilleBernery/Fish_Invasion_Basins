@@ -340,7 +340,77 @@ colnames(tablefootprint)[5]<-"HFmin"
 DATABASE<-merge(DATABASE, tablefootprint, by="X")
 
 
+###GDP###
+####Human density###
+#Intactness####
 
+
+
+
+####Production aquaculture####
+setwd("D:/these/Axe_3")
+tableaqua<-read.csv("./Data/Global_production/GLOBAL_PRODUCTION_QUANTITY.csv")
+
+##only get the line with freshwater
+
+library(dplyr)
+
+AQUAF<-tableaqua[tableaqua$PRODUCTION_SOURCE_DET.CODE %in% 'FRESHWATER', ]
+
+##only get the rows in 2019
+
+AQUAF2019<-AQUAF[AQUAF$PERIOD %in% '2019', ] ##on prend que 2019 pour réduire le nombrede lignes 
+
+
+#link country code and country
+
+tablecountry<-read.csv("./Data/Global_production/CL_FI_COUNTRY_GROUPS.csv")
+tcountry<-tablecountry[,c("UN_Code", "Name_En")]
+
+taquaf<-merge(AQUAF2019, tcountry, by.x = "COUNTRY.UN_CODE", by.y="UN_Code") ##177 country
+
+##have only one value per country ==> Addition of different aquaculture
+taquafadd<-taquaf %>%
+  group_by(Name_En) %>%
+  summarize(Allvalue = sum(VALUE, na.rm = TRUE))
+
+#Change names of some countries to better make the link with basins
+taquafadd$Name_En<-as.factor(taquafadd$Name_En)
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Bolivia (Plurinat.State)"]<-"Bolivia"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="CÃ´te d'Ivoire"]<-"CÂ¶te d'Ivoire" ####warning
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Brunei Darussalam"]<-"Brunei"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Iran (Islamic Rep. of)"]<-"Iran"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Lao People's Dem. Rep"]<-"Laos"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="North Macedonia"]<-"Macedonia"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Netherlands"]<-"Netherlands Antilles"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Korea, Dem. People's Rep"]<-"North Korea"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Korea, Republic of"]<-"South Korea"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Palestine"]<-"Palestina"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Russian Federation"]<-"Russia"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Sudan (former)"]<-"Sudan"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Syrian Arab Republic"]<-"Syria"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Sudan (former)"]<-"Sudan"
+
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Venezuela, Boliv Rep of"]<-"Venezuela"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Congo, Dem. Rep. of the"]<-"Democratic Republic of the Congo"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Congo"]<-"Republic of Congo"
+
+
+
+##link bassin with country with aquaculture
+
+basinsval<-readOGR("./Shapefiles/Leprieur_Tedesco/Basin042017_3119.shp")
+
+basinsval@data<-merge(basins@data, taquafadd, by.x="Country", by.y="Name_En")
+
+
+
+##which country lack?
+pl<-basins@data
+pl2<-basinsval@data
+
+plj<-anti_join(pl,pl2)
+table(plj$Country)
 
 ##############+++++++++++++++++++++++++++++++ABIOTIC+++++++++++++++++++++++######
 ####elevation######https://www.eea.europa.eu/data-and-maps/data/world-digital-elevation-model-etopo5

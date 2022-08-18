@@ -268,11 +268,7 @@ DATABASE<-merge(DATABASE, nbspperbasinnat[,c("X1.Basin.Name", "Freq.native")], b
 ##Shapefiles basins
 basins<-readOGR("./Shapefiles/Leprieur_Tedesco/Basin042017_3119.shp")
 
-x11()
-plot(basins)
-
 dam<-readOGR("./Data/Data_Basin/GOODD_data/GOOD2_dams.shp")
-plot(dam, add=T)
 class(dam)
 dam2<-as.data.frame(dam)
 
@@ -341,8 +337,123 @@ DATABASE<-merge(DATABASE, tablefootprint, by="X")
 
 
 ###GDP###
-####Human density###
-#Intactness####
+
+
+
+####Human density####
+library(raster)
+imported_raster_hd<-raster("./Data/Population_density/map/gpw_v4_population_density_rev11_2020_30_sec.tif")
+
+###Change CRS of the raster
+#IRhd<-projectRaster(imported_raster_hd, crs="+proj=longlat +datum=WGS84 +no_defs")
+
+#saveRDS(imported_raster_hd, file = "D:/these/Axe_3/Output/Reproject_humandensity.rds")
+imported_raster<-readRDS("D:/these/Axe_3/Output/Reproject_humandensity.rds")
+imported_raster@data
+
+
+
+BassinspeciesLL<-unique(tedescobassin$X1.Basin.Name)
+# tablehd<-data.frame(Median=numeric(),
+#                    Mean=numeric(),
+#                    Max=numeric(),
+#                    Min=numeric())
+#  N<-0
+#  for (i in BassinspeciesLL)
+#    {
+#    N<-N+1
+#    B<-as.character(as.factor(i))
+#  
+#    poly<-subset(shp, BasinName==i)
+#      ext<-extent(poly)
+# 
+#       ##################human density
+#       rshp<-raster::crop(imported_raster,ext,snap="near")
+#       clip1<-raster::mask(rshp,poly)
+#       clip1<-stack(clip1)
+#       mean1<-cellStats(clip1, stat='mean', na.rm=TRUE)
+#       median1<-cellStats(clip1, stat='median', na.rm=TRUE)
+#       max1<-cellStats(clip1, stat='max', na.rm=TRUE)
+#       min1<-cellStats(clip1, stat='min', na.rm=TRUE)
+#       tablehd[i,1]<-median1
+#       tablehd[i,2]<-mean1
+#       tablehd[i,3]<-max1
+#       tablehd[i,4]<-min1
+# 
+# print((N/length(BassinspeciesLL))*100)
+# 
+# }
+#write.csv2(as.data.frame(tablehd), "./Output/HumanDensityBASIN.csv")
+
+#####merge to database
+tablehd<-read.csv2("./Output/HumanDensityBASIN.csv")
+colnames(tablehd)[2]<-"HDmedian"
+colnames(tablehd)[3]<-"HDmean"
+colnames(tablehd)[4]<-"HDmax"
+colnames(tablehd)[5]<-"HDmin"
+
+
+DATABASE<-merge(DATABASE, tablehd, by="X")
+
+
+
+###Intactness####
+imported_raster_int<-raster("./Data/Intactness/lbii/lbii.asc")
+
+#plot(imported_raster_int)
+
+###Change CRS of the raster
+proj4string(imported_raster_int) <- CRS("+proj=longlat +datum=WGS84 +no_defs")
+#IRint<-projectRaster(imported_raster_int, crs="+proj=longlat +datum=WGS84 +no_defs")
+
+#saveRDS(imported_raster_int, file = "D:/these/Axe_3/Output/Reproject_Intactness.rds")
+imported_raster<-readRDS("D:/these/Axe_3/Output/Reproject_Intactness.rds")
+imported_raster@data
+
+
+BassinspeciesLL<-unique(tedescobassin$X1.Basin.Name)
+tableint<-data.frame(Median=numeric(),
+                   Mean=numeric(),
+                   Max=numeric(),
+                   Min=numeric())
+ N<-0
+ for (i in BassinspeciesLL[2000:3119])
+   {
+   N<-N+1
+   B<-as.character(as.factor(i))
+
+   poly<-subset(shp, BasinName==i)
+     ext<-extent(poly)
+
+      ##################human density
+      rshp<-raster::crop(imported_raster,ext,snap="near")
+      clip1<-raster::mask(rshp,poly)
+      clip1<-stack(clip1)
+      mean1<-cellStats(clip1, stat='mean', na.rm=TRUE)
+      median1<-cellStats(clip1, stat='median', na.rm=TRUE)
+      max1<-cellStats(clip1, stat='max', na.rm=TRUE)
+      min1<-cellStats(clip1, stat='min', na.rm=TRUE)
+      tableint[i,1]<-median1
+      tableint[i,2]<-mean1
+      tableint[i,3]<-max1
+      tableint[i,4]<-min1
+
+print((N/length(BassinspeciesLL[2000:3119]))*100)
+
+}
+write.csv2(as.data.frame(tableint), "./Output/IntactnessBASIN3119.csv")
+
+#####merge to database
+tablehd<-read.csv2("./Output/HumanDensityBASIN.csv")
+colnames(tableint)[2]<-"INTACTmedian"
+colnames(tablint)[3]<-"INTACTmean"
+colnames(tableint)[4]<-"INTACTmax"
+colnames(tableint)[5]<-"INTACTmin"
+
+
+DATABASE<-merge(DATABASE, tableint, by="X")
+
+
 
 
 

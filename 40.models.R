@@ -49,7 +49,7 @@ corrplot(mcor)
 
 
 Data2<- Data[,c("Area.Bassins", "MedianBio1", "MedianBio12", "Temp.ampl","Prec.ampl", "Freq.exotic", "Freq.native", 
-                "Nb.dams","HFmedian", "MedianeElev", "DiffElev")]
+                "Nb.dams", "MedianeElev", "DiffElev", "Medianvalue", "HDmedian")]
 
 #correlations
 mcor <- cor(Data2, use = "pairwise.complete.obs")
@@ -143,7 +143,7 @@ corrplot(mcor)
 
 
 Data12<- Data1[,c("Area.Bassins", "MedianBio1", "MedianBio12", "Temp.ampl","Prec.ampl", "Freq.exotic", "Freq.native", 
-                "Nb.dams","HFmedian", "MedianeElev", "DiffElev")]
+                "Nb.dams","HDmedian", "MedianeElev", "DiffElev", "Medianvalue")]
 
 #correlations
 mcor <- cor(Data12, use = "pairwise.complete.obs")
@@ -215,16 +215,16 @@ colnames(vif_all)
 
 
 
-#######variable à considiérer pouir les modèles
+#######variable à considiérer pour les modèles
 
 Datamodel<- na.omit(Data1[,c("MedianBio1","Prec.ampl", "Freq.exotic", "Freq.native", 
-                  "Nb.dams","HFmedian", "MedianeElev", "DiffElev")])
+                  "Nb.dams","HDmedian", "MedianeElev", "DiffElev", "Medianvalue")])
 
 
 hist(Datamodel$Freq.exotic, breaks=20)
 
 mod<-glm(Freq.exotic~MedianBio1+Prec.ampl+Freq.native+ 
-         Nb.dams+HFmedian+MedianeElev+DiffElev, 
+         Nb.dams+HDmedian+MedianeElev+DiffElev+Medianvalue, 
          data = Datamodel, na.action = na.omit, family="poisson" ) 
 
 
@@ -242,7 +242,7 @@ AIC(mod)
 ##overdispersion donc negative bino
 library(MASS)
 modnb<-glm.nb(Freq.exotic~MedianBio1+Prec.ampl+Freq.native+ 
-           Nb.dams+HFmedian+MedianeElev+DiffElev, 
+           Nb.dams+HDmedian+MedianeElev+DiffElev+Medianvalue, 
          data = Datamodel) 
 
 #AIC
@@ -268,10 +268,11 @@ res<-resid(modnbfiltre)
 res<-as.data.frame(res)
 
 
+
 ######pvalues
 summary(modnbfiltre)
 anov<-Anova(modnbfiltre, test='F')
-infopvalueglobalintro[["globalintro"]]<-anov
+
 
 
 ######estimates

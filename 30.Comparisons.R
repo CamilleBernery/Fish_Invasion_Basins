@@ -1,6 +1,7 @@
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
+library(shapefiles)
 
 rm(list=ls())
 setwd("D:/these/Axe_3")
@@ -18,6 +19,12 @@ for (i in 1:length(DATABASE[,1])) {
 
 DATABASE$Freq.exotic01<-as.factor(DATABASE$Freq.exotic01)
 
+###bassins
+shp <- readOGR(dsn = 'D:/these/database/Leprieur_Tedesco/Basin042017_3119.shp')
+shp2<-merge(shp[,c("BasinName")], DATABASE[,c("X","Freq.exotic01")], by.x="BasinName", by.y="X")
+x11()
+plot(shp2, col=shp2$Freq.exotic01)
+shp2$Freq.exotic01
 
 
 #############number of natives##################
@@ -248,3 +255,55 @@ ggplot(DATABASE, aes(y=DiffElev, x=Freq.exotic01, color=Freq.exotic01)) +
 ##test
 wilcox.test(database1$DiffElev, 
             database0$DiffElev)
+
+
+
+############HD median###########
+shapiro.test(DATABASE$HDmedian)
+shapiro.test(database1$HDmedian)
+shapiro.test(database0$HDmedian)
+#####none of the modalities are normaly distributed --> Mann whitney test
+
+##histograms
+hist(DATABASE$HDmedian, breaks=100)
+hist(database1$HDmedian, breaks=100)
+hist(database0$HDmedian, breaks=100)
+
+
+##boxplot
+#x11()
+ggplot(DATABASE, aes(y=log10(HDmedian+1), x=Freq.exotic01, color=Freq.exotic01)) +
+  geom_boxplot(notch=TRUE)
+
+
+
+
+##test
+wilcox.test(database1$HDmedian, 
+            database0$HDmedian)
+
+
+############Aire bassin###########
+shapiro.test(log10(DATABASE$Area.Bassins+1))
+shapiro.test(log10(database1$Area.Bassins+1))
+shapiro.test(log10(database0$Area.Bassins+1))
+#####none of the modalities are normaly distributed --> Mann whitney test
+
+##histograms
+hist(DATABASE$DiffElev, breaks=100)
+hist(database1$DiffElev, breaks=100)
+hist(database0$DiffElev, breaks=100)
+
+
+##boxplot
+#x11()
+ggplot(DATABASE, aes(y=log10(DATABASE$'Area.Bassins'+1), x=Freq.exotic01, color=Freq.exotic01)) +
+  geom_boxplot(notch=TRUE)
+
+
+
+
+##test
+wilcox.test(log10(database1$'Area.Bassins'+1), 
+            log10(database0$'Area.Bassins'+1))
+

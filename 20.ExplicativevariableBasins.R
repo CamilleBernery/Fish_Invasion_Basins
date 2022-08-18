@@ -377,10 +377,10 @@ taquafadd<-taquaf %>%
 #Change names of some countries to better make the link with basins
 taquafadd$Name_En<-as.factor(taquafadd$Name_En)
 levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Bolivia (Plurinat.State)"]<-"Bolivia"
-levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="CÃ´te d'Ivoire"]<-"CÂ¶te d'Ivoire" ####warning
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="CÃ´te d'Ivoire"]<-"Cote d'Ivoire" ####warning
 levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Brunei Darussalam"]<-"Brunei"
 levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Iran (Islamic Rep. of)"]<-"Iran"
-levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Lao People's Dem. Rep"]<-"Laos"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Lao People's Dem. Rep."]<-"Laos"
 levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="North Macedonia"]<-"Macedonia"
 levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Netherlands"]<-"Netherlands Antilles"
 levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Korea, Dem. People's Rep"]<-"North Korea"
@@ -389,8 +389,10 @@ levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Palestine"]<-"Palestina"
 levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Russian Federation"]<-"Russia"
 levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Sudan (former)"]<-"Sudan"
 levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Syrian Arab Republic"]<-"Syria"
-levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Sudan (former)"]<-"Sudan"
-
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Taiwan Province of China"]<-"Taiwan"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Tanzania, United Rep. of"]<-"Tanzania"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="United States of America"]<-"United States"
+levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Viet Nam"]<-"Vietnam"
 levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Venezuela, Boliv Rep of"]<-"Venezuela"
 levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Congo, Dem. Rep. of the"]<-"Democratic Republic of the Congo"
 levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Congo"]<-"Republic of Congo"
@@ -400,6 +402,9 @@ levels(taquafadd$Name_En)[levels(taquafadd$Name_En)=="Congo"]<-"Republic of Cong
 ##link bassin with country with aquaculture
 
 basinsval<-readOGR("./Shapefiles/Leprieur_Tedesco/Basin042017_3119.shp")
+basinsval@data$Country<-as.factor(basinsval@data$Country)
+levels(basinsval@data$Country)[levels(basinsval@data$Country)=="CÃ´te d'Ivoire"]<-"Cote d'Ivoire"
+levels(basinsval@data$Country)[levels(basinsval@data$Country)=="CÂ¶te d'Ivoire"]<-"Cote d'Ivoire"
 
 basinsval@data<-merge(basins@data, taquafadd, by.x="Country", by.y="Name_En")
 
@@ -411,6 +416,29 @@ pl2<-basinsval@data
 
 plj<-anti_join(pl,pl2)
 table(plj$Country)
+
+
+###get only one value per basin
+
+#median of all countries in one basin
+Bassinvalue<-basinsval@data %>%
+  group_by(BasinName) %>%
+  summarize(Medianvalue = median(Allvalue, na.rm = TRUE))
+
+Bassinvalue<-as.data.frame(Bassinvalue)
+
+#mean of all countries in one basin
+Bassinvalue2<-basinsval@data %>%
+  group_by(BasinName) %>%
+  summarize(Meanvalue = mean(Allvalue, na.rm = TRUE))
+
+Bassinvalue2<-as.data.frame(Bassinvalue2)
+
+##merge
+DATABASE<-merge(DATABASE, Bassinvalue, by.x="X", by.y="BasinName")
+DATABASE<-merge(DATABASE, Bassinvalue2, by.x="X", by.y="BasinName")
+
+
 
 ##############+++++++++++++++++++++++++++++++ABIOTIC+++++++++++++++++++++++######
 ####elevation######https://www.eea.europa.eu/data-and-maps/data/world-digital-elevation-model-etopo5
